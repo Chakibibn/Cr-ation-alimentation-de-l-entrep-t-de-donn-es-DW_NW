@@ -1,0 +1,347 @@
+--1--
+CREATE DATABASE DW_NW
+--2--
+go
+USE DW_NW
+--Création tables de dimension –
+--TD_Fournisseur-- 
+CREATE TABLE TD_Fournisseur(
+		SupplierID int not null,
+		Compnyname nvarchar(40) not null,
+		city nvarchar(15) not null,
+);
+
+--TD_Categorie--
+CREATE TABLE TD_Categorie(
+		CategorieID int  not null,
+		CategorieName nvarchar(15) not null
+);
+--TD_NIVVENTE--
+CREATE TABLE TD_NIVVENTE(
+		Levelvente nvarchar(20)  not null
+);
+--TD_AnneeCommande--
+CREATE TABLE TD_AnneeCommande(
+		AnneeCMD int not null 
+);
+--TD_Client--
+CREATE TABLE TD_Client(
+		CustomerId nchar(5) not null ,
+		Customername nvarchar(40) ,
+		city nvarchar(15) not null
+	);
+--TD_Employee--
+CREATE TABLE TD_Employee (
+		EmployeeId int not null ,
+		Firstname nvarchar(10) not null,
+		Lastname nvarchar(20) not null,
+		city nvarchar(15) not null
+);
+--TD_AnneeLIV--
+CREATE TABLE TD_AnneeLIV(
+		AnneeLIV int  not null 
+);
+--TD_Transporteur--
+CREATE TABLE TD_Transporteur (
+		TransporteurID int not null ,
+		NomTransporteur nvarchar(40)
+);
+--TD_Age--
+CREATE TABLE TD_Age(
+ 		Age int not null 
+);
+--TD_Ville--
+CREATE TABLE TD_Ville(
+		ville nvarchar(15) not null  , 
+		pays nvarchar(15)
+);
+--TD_NIVCMD--
+CREATE TABLE TD_NIVCMD(
+		LevelCMD nvarchar(20) not null 
+);
+--Ajouter des contraints pour les tables de dimensions --
+ALTER TABLE TD_NIVCMD  ADD constraint LevelCMD primary key (LevelCMD)
+ALTER TABLE TD_Ville  ADD constraint ville primary key (ville)
+ALTER TABLE TD_Age  ADD constraint Age primary key (Age)
+ALTER TABLE TD_AnneeLIV  ADD constraint AnneeLIV primary key (AnneeLIV)
+ALTER TABLE TD_Transporteur  ADD constraint TransporteurID primary key (TransporteurID)
+ALTER TABLE TD_Categorie  ADD constraint CategorieID primary key (CategorieID)
+ALTER TABLE TD_NIVVENTE  ADD constraint Levelvente primary key (Levelvente)
+ALTER TABLE TD_AnneeCommande  ADD constraint AnneeCMD primary key (AnneeCMD)
+ALTER TABLE TD_Fournisseur ADD 
+ constraint SupplierID primary key (SupplierID),
+ constraint cityFournisseur foreign key (city) references TD_Ville (ville)
+ALTER TABLE TD_Client ADD 
+constraint CustomerId primary key (CustomerId), 
+constraint cityClient foreign key (city) references TD_Ville (ville)
+ALTER TABLE TD_Employee ADD 
+constraint EmployeeId primary key (EmployeeId), 
+constraint cityEmployee foreign key (city) references TD_Ville (ville)
+--Création tables de Faits--
+--TF_VAL_STK--
+CREATE TABLE TF_VAL_STK(
+		SupplierID int not null,
+		CategorieID int not null,
+		val_stk float
+);
+--TF_NBR_PROD--
+CREATE TABLE TF_NBR_PROD(
+		SupplierID int not null,
+		CategorieID int not null,
+		Levelvente nvarchar(20) not null,
+		NB_PROD int 
+);
+--TF_CA_CMD--
+CREATE TABLE TF_CA_CMD(
+		AnneeCMD int not null,
+		CategorieID int not null,
+		CustomerId nchar(5) not null,
+		EmployeeId int not null,
+		CA_CMD float);
+--TF_CA_LIV--
+CREATE TABLE TF_CA_LIV(
+		AnneeLIV int not null,
+		CategorieID int not null,
+		CustomerId nchar(5) not null,
+		TransporteurID int not null,
+		CA_LIV float  
+	);
+--TF_NB_EMP--
+CREATE TABLE TF_NB_EMP(
+		Age int not null,
+		ville nvarchar(15) not null,
+		NB_EMP int 	
+);
+--TF_NBR_CLIENT--
+CREATE TABLE TF_NBR_CLIENT(
+		ville nvarchar(15) not null,
+		LevelCMD nvarchar(20) not null,
+		NBRCLIENT int
+);
+
+--Ajouter des contraints pour les tables de dimensions-- 
+ALTER TABLE TF_VAL_STK ADD 
+constraint PK_VAL_STK primary key (SupplierID, CategorieID),
+constraint FK_VAL_STK_SupplierID foreign key (SupplierID) references TD_Fournisseur (SupplierID),
+constraint FK_VAL_STK_CategorieID foreign key (CategorieID) references TD_Categorie (CategorieID)
+ALTER TABLE TF_NBR_PROD ADD 
+constraint PK_NBR_PROD primary key (SupplierID, CategorieID,Levelvente),
+constraint FK_NBR_PROD_SupplierID foreign key (SupplierID) references TD_Fournisseur (SupplierID),
+constraint FK_NBR_PROD_CategorieID foreign key (CategorieID) references TD_Categorie (CategorieID),
+constraint FK_NBR_PROD_Levelvente foreign key (Levelvente) references TD_NIVVENTE (Levelvente)
+ALTER TABLE TF_CA_CMD ADD 
+constraint PK_CA_CMD primary key (AnneeCMD, CategorieID,CustomerId,EmployeeId),
+constraint FK_CA_CMD_AnneeCMD foreign key (AnneeCMD) references TD_AnneeCommande (AnneeCMD),
+constraint FK_CA_CMD_CategorieID foreign key (CategorieID) references TD_Categorie (CategorieID),
+constraint FK_CA_CMD_CustomerId foreign key (CustomerId) references TD_Client (CustomerId),
+constraint FK_CA_CMD_EmployeeId foreign key (EmployeeId) references TD_Employee (EmployeeId)
+ALTER TABLE TF_CA_LIV ADD
+constraint PK_CA_LIV primary key (AnneeLIV, CategorieID,CustomerId,TransporteurID),
+constraint FK_CA_LIV_AnneeLIV foreign key (AnneeLIV) references TD_AnneeLIV (AnneeLIV),
+constraint FK_CA_LIV_CategorieID foreign key (CategorieID) references TD_Categorie (CategorieID),
+constraint FK_CA_LIV_CustomerId foreign key (CustomerId) references TD_Client (CustomerId),
+constraint FK_CA_LIV_TransporteurID foreign key (TransporteurID) references TD_Transporteur (TransporteurID)
+ALTER TABLE TF_NB_EMP ADD 
+constraint PK_NB_EMP primary key (Age, ville),
+constraint FK_NB_EMP_Age foreign key (Age) references TD_Age (Age),
+constraint FK_NB_EMP_ville foreign key (ville) references TD_Ville (ville)
+ALTER TABLE TF_NBR_CLIENT ADD 
+constraint PK_NBR_CLIENT primary key (ville,LevelCMD),
+constraint FK_NBR_CLIENT_ville foreign key (ville) references TD_Ville (ville),
+constraint FK_NBR_CLIENT_LevelCMD foreign key (LevelCMD) references TD_NIVCMD (LevelCMD)
+use northwind
+
+--TD_NIVCMD--
+go
+INSERT INTO DW_NW.dbo.TD_NIVCMD(LevelCMD)
+SELECT DISTINCT  
+	CASE 
+	WHEN Count(OrderID) <15 THEN 'LEVEL3'
+	WHEN Count(OrderID) >=15 and Count(OrderID) <=50 THEN 'LEVEL2'
+	ElSE 'LEVEL1 '
+	END 
+from Orders
+GROUP BY CustomerID
+
+--TD_Age-- 
+go
+INSERT INTO DW_NW.dbo.TD_Age (DW_NW.dbo.TD_Age.Age)
+SELECT DISTINCT DATEDIFF(year,BirthDate,GETDATE()) from Employees
+WHERE cast(DATEDIFF(year,BirthDate,GETDATE()) as varchar(4)) COLLATE FRENCH_CI_AS not in( select cast(DW_NW.dbo.TD_Age.Age as varchar(4)) from DW_NW.dbo.TD_Age)
+
+--TD_Transporteur--
+go
+INSERT INTO DW_NW.dbo.TD_Transporteur(DW_NW.dbo.TD_Transporteur.TransporteurID,DW_NW.dbo.TD_Transporteur.NomTransporteur)
+SELECT ShipperID,CompanyName from Shippers
+WHERE cast(ShipperID as varchar(4))+cast(CompanyName as varchar(4)) COLLATE FRENCH_CI_AS not in ( select cast ( DW_NW.dbo.TD_Transporteur.TransporteurID as varchar(4))+cast(DW_NW.dbo.TD_Transporteur.NomTransporteur as varchar(4)) from DW_NW.dbo.TD_Transporteur)
+
+--TD_AnnéeLIV--
+go
+INSERT INTO DW_NW.dbo.TD_AnneeLIV( DW_NW.dbo.TD_AnneeLIV.AnneeLIV)
+SELECT DISTINCT year(ShippedDate)from Orders where year(ShippedDate) IS NOT NULL
+and  cast(year(ShippedDate) as varchar(4)) COLLATE FRENCH_CI_AS not in (select cast(DW_NW.dbo.TD_AnneeLIV.AnneeLIV as varchar(4)) from DW_NW.dbo.TD_AnneeLIV)
+
+--TD_AnneeCommande--
+go
+INSERT INTO DW_NW.dbo.TD_AnneeCommande ( DW_NW.dbo.TD_AnneeCommande.AnneeCMD)
+SELECT DISTINCT year(OrderDate) from Orders
+where cast(year(OrderDate) as varchar(4)) COLLATE FRENCH_CI_AS not in (select cast(DW_NW.dbo.TD_AnneeCommande.AnneeCMD as varchar(4)) from DW_NW.dbo.TD_AnneeCommande)
+
+--TD_NIVVENT-- 
+go
+INSERT INTO DW_NW.dbo.TD_NIVVENTE(DW_NW.dbo.TD_NIVVENTE.Levelvente)
+SELECT DISTINCT CASE 
+       WHEN Quantity < 10 THEN 'LEVEL3'
+       WHEN Quantity >= 10 and Quantity <=50 THEN 'LEVEL2'
+	   ELSE 'LEVEL1'
+END
+from [Order Details] 
+where CASE 
+       WHEN Quantity < 10 THEN 'LEVEL3'
+       WHEN Quantity >= 10 and Quantity <=50 THEN 'LEVEL2'
+	   ELSE 'LEVEL1'
+END COLLATE FRENCH_CI_AS not in (select DW_NW.dbo.TD_NIVVENTE.Levelvente from DW_NW.dbo.TD_NIVVENTE)
+
+
+
+--TD_categorie--
+go
+INSERT INTO DW_NW.dbo.TD_Categorie (DW_NW.dbo.TD_Categorie.CategorieID,DW_NW.dbo.TD_Categorie.CategorieName)
+SELECT CategoryID,CategoryName from Categories
+where cast(CategoryID as varchar(4))+CategoryName COLLATE FRENCH_CI_AS not in (select cast( DW_NW.dbo.TD_Categorie.CategorieID as varchar(4))+DW_NW.dbo.TD_Categorie.CategorieName from DW_NW.dbo.TD_Categorie) 
+
+--TD_Ville--
+go
+INSERT INTO DW_NW.dbo.TD_Ville (DW_NW.dbo.TD_Ville.ville,DW_NW.dbo.TD_Ville.pays)
+SELECT   City, Country from Employees
+WHERE City IS NOT NULL and City+ Country COLLATE FRENCH_CI_AS not in (select DW_NW.dbo.TD_Ville.ville+DW_NW.dbo.TD_Ville.pays from DW_NW.dbo.TD_Ville)
+UNION 
+SELECT   City, Country from Customers
+WHERE City IS NOT NULL and City+ Country COLLATE FRENCH_CI_AS not in (select DW_NW.dbo.TD_Ville.ville+DW_NW.dbo.TD_Ville.pays from DW_NW.dbo.TD_Ville)
+UNION 
+SELECT   City, Country from Suppliers
+WHERE City IS NOT NULL and City+ Country  COLLATE FRENCH_CI_AS not in (select DW_NW.dbo.TD_Ville.ville+DW_NW.dbo.TD_Ville.pays from DW_NW.dbo.TD_Ville)
+
+--TD_Client--
+go
+INSERT INTO DW_NW.dbo.TD_Client(DW_NW.dbo.TD_Client.CustomerId,DW_NW.dbo.TD_Client.Customername,DW_NW.dbo.TD_Client.city)
+SELECT CustomerID,CompanyName,City from Customers
+where CustomerID+CompanyName+City COLLATE FRENCH_CI_AS not in (select DW_NW.dbo.TD_Client.CustomerId+DW_NW.dbo.TD_Client.Customername+DW_NW.dbo.TD_Client.city from DW_NW.dbo.TD_Client)
+
+--TD_Fournisseur-- 
+go
+INSERT INTO DW_NW.dbo.TD_Fournisseur (DW_NW.dbo.TD_Fournisseur.SupplierID,DW_NW.dbo.TD_Fournisseur.Compnyname,DW_NW.dbo.TD_Fournisseur.City)
+SELECT SupplierID, CompanyName, City from Suppliers 
+where SupplierID+CompanyName+City COLLATE FRENCH_CI_AS not in (select DW_NW.dbo.TD_Fournisseur.SupplierID+DW_NW.dbo.TD_Fournisseur.Compnyname+DW_NW.dbo.TD_Fournisseur.City from DW_NW.dbo.TD_Fournisseur)
+
+--TD_Employee—
+go
+INSERT INTO DW_NW.dbo.TD_Employee(DW_NW.dbo.TD_Employee.EmployeeId,DW_NW.dbo.TD_Employee.Firstname,DW_NW.dbo.TD_Employee.Lastname,DW_NW.dbo.TD_Employee.city)
+SELECT EmployeeID,FirstName,LastName,City
+from Employees
+where EmployeeID+FirstName+LastName+City COLLATE FRENCH_CI_AS not in (select DW_NW.dbo.TD_Employee.EmployeeId+DW_NW.dbo.TD_Employee.Firstname+DW_NW.dbo.TD_Employee.Lastname+DW_NW.dbo.TD_Employee.city from DW_NW.dbo.TD_Employee)
+use northwind
+
+--1/TF_VAL_STK--
+go
+INSERT INTO DW_NW.dbo.TF_VAL_STK(DW_NW.dbo.TF_VAL_STK.SupplierID,DW_NW.dbo.TF_VAL_STK.CategorieID,DW_NW.dbo.TF_VAL_STK.val_stk)
+select SupplierID,CategoryID, SUM(UnitPrice * UnitsInStock) as VAL_STK
+from Products
+WHERE SupplierID+CategoryID not in (select DW_NW.dbo.TF_VAL_STK.SupplierID+DW_NW.dbo.TF_VAL_STK.CategorieID from DW_NW.dbo.TF_VAL_STK)
+GROUP BY SupplierID,CategoryID
+--2/TF_NB_PROD--
+go
+INSERT INTO DW_NW.dbo.TF_NBR_PROD(DW_NW.dbo.TF_NBR_PROD.SupplierID,DW_NW.dbo.TF_NBR_PROD.CategorieID,DW_NW.dbo.TF_NBR_PROD.Levelvente,DW_NW.dbo.TF_NBR_PROD.NB_PROD)
+select DISTINCT P.SupplierID,P.CategoryID, CASE 
+       WHEN Quantity < 10 THEN 'LEVEL3'
+       WHEN Quantity >= 10 and Quantity <=50 THEN 'LEVEL2'
+	   ELSE 'LEVEL1'
+END AS Levelvente,
+COUNT(OD.ProductID) AS NB_PROD FROM 
+Products P JOIN [Order Details] OD ON P.ProductID = OD.ProductID
+WHERE P.SupplierID+P.CategoryID not in (select DW_NW.dbo.TF_NBR_PROD.SupplierID+DW_NW.dbo.TF_NBR_PROD.CategorieID from DW_NW.dbo.TF_NBR_PROD)
+GROUP BY SupplierID,CategoryID,CASE 
+       WHEN Quantity < 10 THEN 'LEVEL3'
+       WHEN Quantity >= 10 and Quantity <=50 THEN 'LEVEL2'
+	   ELSE 'LEVEL1'
+END
+
+--3/TF_CA_CMD--
+go
+INSERT INTO DW_NW.dbo.TF_CA_CMD(DW_NW.dbo.TF_CA_CMD.AnneeCMD,DW_NW.dbo.TF_CA_CMD.CategorieID,DW_NW.dbo.TF_CA_CMD.CustomerId,DW_NW.dbo.TF_CA_CMD.EmployeeId,DW_NW.dbo.TF_CA_CMD.CA_CMD)
+select year(OrderDate) as AnneeCMD,CategoryID, CustomerID, EmployeeID,SUM((OD.UnitPrice*Quantity)-(Discount*100*OD.UnitPrice)/100) as CA_CMD
+FROM Orders O JOIN [Order Details] OD ON  O.OrderID = OD.OrderID
+JOIN Products P ON OD.ProductID=  P.ProductID
+WHERE ShippedDate IS  NULL and cast(year(OrderDate) as char(4)) + cast(CategoryID as char(4))   + cast(CustomerID as char(4))+ cast(EmployeeID as char(4)) COLLATE FRENCH_CI_AS not in (select cast (DW_NW.dbo.TF_CA_CMD.AnneeCMD as char(4))+ cast(DW_NW.dbo.TF_CA_CMD.CategorieID as char(4))+ cast(DW_NW.dbo.TF_CA_CMD.CustomerId as char(4))+ cast(DW_NW.dbo.TF_CA_CMD.EmployeeId as char(4)) from DW_NW.dbo.TF_CA_CMD)
+GROUP BY year(OrderDate),CategoryID, CustomerID, EmployeeID 
+--4/TF_CA_LIV--
+go
+INSERT INTO DW_NW.dbo.TF_CA_LIV(DW_NW.dbo.TF_CA_LIV.AnneeLIV,DW_NW.dbo.TF_CA_LIV.CategorieID,DW_NW.dbo.TF_CA_LIV.CustomerId,DW_NW.dbo.TF_CA_LIV.TransporteurID,DW_NW.dbo.TF_CA_LIV.CA_LIV)
+SELECT  year(ShippedDate) as AnneeLIV,CategoryID ,CustomerID,ShipVia,SUM((OD.UnitPrice*Quantity)-(Discount*100*OD.UnitPrice)/100) as CA_LIV
+FROM Orders O JOIN [Order Details] OD ON O.OrderID = OD.OrderID
+JOIN Products P ON OD.ProductID = P.ProductID 
+WHERE year(ShippedDate) IS NOT NULL and cast(year(ShippedDate) as char(4)) + cast(CategoryID as char(4))+ cast(CustomerID as char(4) ) + cast(ShipVia as char(4)) COLLATE FRENCH_CI_AS not in (select cast(DW_NW.dbo.TF_CA_LIV.AnneeLIV as char(4))+cast(DW_NW.dbo.TF_CA_LIV.CategorieID as char(4))+cast(DW_NW.dbo.TF_CA_LIV.CustomerId as char(4))+cast(DW_NW.dbo.TF_CA_LIV.TransporteurID as char(4)) from DW_NW.dbo.TF_CA_LIV)
+GROUP BY year(ShippedDate),CategoryID ,CustomerID,ShipVia
+--5/TF_NB_EMP--
+go
+INSERT INTO DW_NW.dbo.TF_NB_EMP(DW_NW.dbo.TF_NB_EMP.Age,DW_NW.dbo.TF_NB_EMP.ville,DW_NW.dbo.TF_NB_EMP.NB_EMP)
+SELECT  DATEDIFF(year,BirthDate,GETDATE()) as Age,City as ville,COUNT(EmployeeID)
+FROM Employees
+WHERE cast (DATEDIFF(year,BirthDate,GETDATE()) as char(2)) + City COLLATE FRENCH_CI_AS not in  (select cast (DW_NW.dbo.TF_NB_EMP.Age as char(2) )+ DW_NW.dbo.TF_NB_EMP.ville from DW_NW.dbo.TF_NB_EMP)
+GROUP BY DATEDIFF(year,BirthDate,GETDATE()),City
+--6/TF_NBR_CLIENT--
+go
+INSERT INTO DW_NW.dbo.TF_NBR_CLIENT(DW_NW.dbo.TF_NBR_CLIENT.ville,DW_NW.dbo.TF_NBR_CLIENT.LevelCMD,DW_NW.dbo.TF_NBR_CLIENT.NBRCLIENT)
+SELECT City,CASE 
+	WHEN Count(OrderID) <15 THEN 'LEVEL3'
+	WHEN Count(OrderID) >=15 and Count(OrderID) <=50 THEN 'LEVEL2'
+	ElSE 'LEVEL1'
+	END as LevelCMD,COUNT(C.CustomerID) as NBRCLIENT FROM Customers C JOIN Orders O
+	ON C.CustomerID = O.CustomerID
+	WHERE City  COLLATE FRENCH_CI_AS not in ( select DW_NW.dbo.TF_NBR_CLIENT.ville from DW_NW.dbo.TF_NBR_CLIENT)
+	GROUP BY City
+
+----------------------------------------------ANALYSE DES BESOINS--------------------------------------
+go
+use DW_NW
+--------------------------------------------------BESOIN1------------------------------------------------------------
+Go
+select V.pays,C.CategorieName, SUM(T.val_stk) as VAL_STK FROM TF_VAL_STK T JOIN TD_Fournisseur F ON T.SupplierID = F.SupplierID
+JOIN TD_Ville V ON V.ville = F.city
+JOIN TD_Categorie C ON T.CategorieID= C.CategorieID 
+GROUP BY V.pays,C.CategorieName
+
+
+--------------------------------------------------BESOIN2------------------------------------------------------------
+Go
+select V.pays,C.CategorieName,N.Levelvente ,SUM(N.NB_PROD) as NB_PROD FROM TF_NBR_PROD N JOIN  TD_Fournisseur F ON N.SupplierID = F.SupplierID 
+JOIN TD_Categorie C ON N.CategorieID= C.CategorieID
+JOIN TD_Ville V ON V.ville = F.city
+GROUP BY V.pays,C.CategorieName,N.Levelvente
+
+
+--------------------------------------------------BESOIN3------------------------------------------------------------
+Go
+SELECT AnneeCMD,C.Customername,E.Firstname,E.Lastname,SUM(CA_CMD) as CA_CMD FROM TF_CA_CMD T JOIN TD_Client C ON 
+T.CustomerId = C.CustomerId JOIN TD_Employee E ON T.EmployeeId = E.EmployeeId 
+GROUP BY AnneeCMD,C.Customername,E.Firstname,E.Lastname
+
+
+--------------------------------------------------BESOIN4------------------------------------------------------------
+Go
+SELECT  AnneeLIV,C.CategorieName,V.pays,SUM(CA_LIV) as CA_LIV FROM TF_CA_LIV T JOIN TD_Categorie C 
+ON T.CategorieID = C.CategorieID 
+JOIN TD_Client Cl ON T.CustomerId = Cl.CustomerId
+JOIN TD_Ville V ON V.ville = cl.city
+GROUP BY AnneeLIV,C.CategorieName,V.pays
+
+--------------------------------------------------BESOIN5------------------------------------------------------------
+Go
+SELECT Age,V.pays,SUM(NB_EMP) as NB_EMP FROM TF_NB_EMP T JOIN TD_Ville V 
+ON T.ville = V.ville
+GROUP BY Age,V.pays
+
+--------------------------------------------------BESOIN6------------------------------------------------------------
+Go
+SELECT V.pays,LevelCMD,SUM(NBRCLIENT) as NBR_ClIENT FROM TF_NBR_CLIENT T JOIN TD_Ville V  ON T.ville=V.ville 
+GROUP BY  V.pays,LevelCMD
